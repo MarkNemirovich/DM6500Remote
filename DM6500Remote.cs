@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Reflection;
+using System.IO;
 using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml.Linq;
 
@@ -17,35 +12,56 @@ namespace DM6500Remote
         private const double MIN_DELAY = 0.1;
         private const double MAX_DELAY = 60;
         private const int SECOND = 1000;
-        private string errorMessage = "Wrong input parameters";
-        private VirtualMachine workMachinge;
+        private string _folderPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+        private string _errorMessage = "Wrong input parameters";
+        private WorkMachine _workMachinge;
+        private ExcelWritter _excelFile;
 
         public Background()
         {
             InitializeComponent();
+            ChangeDirectory.Text = _folderPath;
         }
         #region UI
-
+        private void ChangeDirectory_Click(object sender, EventArgs e)
+        {
+            if (FolderBrowserDialog.ShowDialog() == DialogResult.Cancel)
+                return;
+            _folderPath = FolderBrowserDialog.SelectedPath;
+            ChangeDirectory.Text = _folderPath;
+        }
         private void Start_Click(object sender, EventArgs e)
         {
+            if (CheckName() == false)
+            {
+                MessageBox.Show("File name can contatin only letters, numbers and underscore");
+                return;
+            }
             if (CheckParameters())
             {
                 Progress.Value = 0;
                 Int32.TryParse(Count.Text, out int value);
                 Progress.Maximum = value;
+                Progress.Value = 0;
                 StartMeasurement();
             }
             else
-                MessageBox.Show(errorMessage);
+                MessageBox.Show(_errorMessage);
         }
 
         private void Stop_Click(object sender, EventArgs e)
         {
-            ChangeEnableState();
+            _workMachinge.StopExchange();
+            StopMeasurement();
         }
 
         private void Exit_Click(object sender, EventArgs e)
         {
+            try
+            {
+                _excelFile.SaveFile();
+            }
+            catch { }
             Application.Exit();
         }
 
@@ -55,7 +71,7 @@ namespace DM6500Remote
         }
         private void FillTheData(string[] data)
         {
-            Voltage.Text = data[0];
+            Current.Text = data[0];
             Temperature.Text = data[1];            
             Progress.Value++;
         }
@@ -65,8 +81,12 @@ namespace DM6500Remote
         {
             bool isCorrect = true;
             isCorrect &= (Int32.TryParse(Count.Text, out int value) & value > 0 & value < Int16.MaxValue);
-            isCorrect &= (Double.TryParse(Interval.Text, out double delay) & delay > MIN_DELAY & delay < MAX_DELAY);
+            isCorrect &= (Double.TryParse(Interval.Text, out double delay) & delay >= MIN_DELAY & delay <= MAX_DELAY);
             return isCorrect;
+        }
+        private bool CheckName()
+        {
+            return Regex.IsMatch(FileName.Text, @"^[a-zA-Z0-9_]+$");
         }
         private void ChangeEnableState()
         {
@@ -75,38 +95,53 @@ namespace DM6500Remote
             Exit.Enabled = !Exit.Enabled;
             CountPanel.Enabled = !CountPanel.Enabled;
             IntervalPanel.Enabled = !IntervalPanel.Enabled;
-            VoltagePanel.Enabled = !VoltagePanel.Enabled;
+            CurrentPanel.Enabled = !CurrentPanel.Enabled;
             TemperaturePanel.Enabled = !TemperaturePanel.Enabled;
+            ChangeDirectory.Enabled = !ChangeDirectory.Enabled;
+            FileName.Enabled = !FileName.Enabled;
+            Progress.Enabled = !Progress.Enabled;
         }
         private void StartMeasurement()
         {
             Int32.TryParse(Count.Text, out int amount);
             Double.TryParse(Interval.Text, out double delay);
-            workMachinge = new VirtualMachine((int)(SECOND * delay), amount);
-            workMachinge.WriteMessage += ReadMessage;   // Subscription
+            if (_excelFile == null)
+                _excelFile = new ExcelWritter(_folderPath, FileName.Text, "Current", "Temperature");
+            else
+                _excelFile.CreateNewList();
+            //_workMachinge = new VirtualMachine(delay, amount);
+            _workMachinge = new WorkMachine(delay, amount);
+            _workMachinge.WriteMessage += ReadMessage;   // Subscription
+            _workMachinge.Finish += StopMeasurement;   // Subscription
+            _workMachinge.StartExchange();
             ChangeEnableState();
         }
 
         private void StopMeasurement()
         {
-            workMachinge.WriteMessage -= ReadMessage;   // Unsubscription
+            _excelFile.SaveFile();
+            _workMachinge.WriteMessage -= ReadMessage;   // Unsubscription
+            _workMachinge.Finish += StopMeasurement;   // Unsubscription
             ChangeEnableState();
         }
         private void ReadMessage(string[] args)
         {
-            if (args.Length != 2)
-            {
-                MessageBox.Show(errorMessage);
-                return;
-            }
             if (args[0] == "error")
             {
                 MessageBox.Show(args[1]);
                 return;
             }
+            if (args.Length != 3)
+            {
+                MessageBox.Show(_errorMessage);
+                return;
+            }
             FillTheData(args);
-            Double.TryParse(args[0], out double voltage);
-            Double.TryParse(args[1], out double temperature);
+            double[] data = new double[3];
+            Double.TryParse(args[0], out data[0]);
+            Double.TryParse(args[1], out data[1]);
+            Double.TryParse(args[2], out data[2]);
+            _excelFile.AddLine(data);
         }
     }
 }

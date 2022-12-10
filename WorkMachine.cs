@@ -1,9 +1,5 @@
-﻿using Ivi.Visa;
-using NationalInstruments.Visa;
-using System;
-using System.Collections.Generic;
-using System.Runtime.ExceptionServices;
-using System.Text;
+﻿using System;
+using System.Reflection;
 using System.Threading;
 using Ivi.Visa;
 using NationalInstruments.Restricted;
@@ -12,7 +8,7 @@ using static System.Collections.Specialized.BitVector32;
 
 namespace DM6500Remote
 {
-    internal class VirtualMachine : WorkMachine
+    internal class WorkMachine
     {
         private const int SECOND = 1000;
         private readonly double _delay;
@@ -24,29 +20,44 @@ namespace DM6500Remote
         public event Message WriteMessage;
         public event Action Finish;
 
-        public VirtualMachine(double delay, int amount):base(delay,amount)
-        {
+        public WorkMachine(double delay, int amount) 
+        { 
             _delay = delay;
             _amount = amount;
-            StartExchange();
+            try
+            {
+                GetVisaResourceName();
+                Thread.Sleep(SECOND); // wait 1 sec
+                session = new UsbSession(deviceID, AccessModes.None, openTimeout: 2 * SECOND);
+                session.Clear();
+            }
+            catch (Exception e)
+            {
+                string[] args = new string[2];
+                args[0] = "error";
+                args[1] = e.Message;
+                WriteMessage?.Invoke(args);
+            }                
         }
-        private new void StartExchange()
+
+        public void StartExchange()
         {
             string[] data = new string[3];
             double time = 0;
             for (int i = 0; i < _amount; i++)
             {
-                Thread.Sleep((int)(SECOND * _delay));
-                Random randomizer = new Random();
                 data[0] = time.ToString();
-                data[1] = randomizer.NextDouble().ToString();
-                data[2] = randomizer.NextDouble().ToString();
+                session.FormattedIO.WriteLine("*RST\n");
+                data[1] = CurrentMeasurement(session);
+                session.FormattedIO.WriteLine("*RST\n");
+                data[2] = SetTemperatureMeasurement(session);
                 WriteMessage?.Invoke(data);
+                Thread.Sleep((int)(SECOND * _delay));
                 time += _delay;
             }
             StopExchange();
         }
-        private new void StopExchange()
+        public void StopExchange()
         {
             Finish?.Invoke();
             session.Dispose();
@@ -67,7 +78,7 @@ namespace DM6500Remote
             session.FormattedIO.WriteLine(":SENS:FUNC \"TEMP\"\n");
             return ReadAnswer(session);
         }
-        private string VoltageMeasurement(IMessageBasedSession session)
+        private string CurrentMeasurement(IMessageBasedSession session)
         {
             session.FormattedIO.WriteLine(":SENS:FUNC \"VOLT:DC\"\n");
             return ReadAnswer(session);
@@ -76,7 +87,8 @@ namespace DM6500Remote
         {
             session.FormattedIO.WriteLine("READ?\n");
             string answer = session.FormattedIO.ReadLine();
-            answer = answer.Replace(',', '.');
+            answer = answer.Replace('.', ',');
+            answer = answer.TrimEnd(new char[] { '\r', '\n' });
             return answer;
         }
     }
