@@ -11,8 +11,8 @@ namespace DM6500Remote
 {
     public partial class Background : Form
     {
-        private const double MIN_DELAY = 0.1;
-        private const double MAX_DELAY = 60;
+        private const double MIN_DELAY = 0.5;
+        private const double MAX_DELAY = 1000000;
         private const int SECOND = 1000;
         private string _folderPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         private string _errorMessage = "Wrong input parameters";
@@ -73,7 +73,7 @@ namespace DM6500Remote
         private void FillTheData(string[] data)
         {
             Current.Text = data[1];
-            Temperature.Text = data[2];            
+            Voltage.Text = data[2];            
             Progress.Value++;
         }
         #endregion
@@ -97,7 +97,7 @@ namespace DM6500Remote
             CountPanel.Enabled = !CountPanel.Enabled;
             IntervalPanel.Enabled = !IntervalPanel.Enabled;
             CurrentPanel.Enabled = !CurrentPanel.Enabled;
-            TemperaturePanel.Enabled = !TemperaturePanel.Enabled;
+            VoltagePanel.Enabled = !VoltagePanel.Enabled;
             ChangeDirectory.Enabled = !ChangeDirectory.Enabled;
             FileName.Enabled = !FileName.Enabled;
             Progress.Enabled = !Progress.Enabled;
@@ -107,7 +107,7 @@ namespace DM6500Remote
             Int32.TryParse(Count.Text, out int amount);
             Double.TryParse(Interval.Text, out double delay);
             if (_excelFile == null)
-                _excelFile = new ExcelWritter(_folderPath, FileName.Text, "Current", "Temperature");
+                _excelFile = new ExcelWritter(_folderPath, FileName.Text, "Current", "Voltage");
             else
                 _excelFile.CreateNewList();
            // _workMachinge = new VirtualMachine(delay, amount);

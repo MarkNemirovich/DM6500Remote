@@ -52,7 +52,7 @@ namespace DM6500Remote
                 session.FormattedIO.WriteLine("*RST\n");
                 data[1] = CurrentMeasurement(session);
                 session.FormattedIO.WriteLine("*RST\n");
-                data[2] = SetTemperatureMeasurement(session);
+                data[2] = SetVoltageMeasurement(session);
                 WriteMessage?.Invoke(data);
                 Thread.Sleep((int)(SECOND * _delay));
                 time += _delay;
@@ -79,9 +79,9 @@ namespace DM6500Remote
             }
             rmSession.Dispose();
         }
-        private string SetTemperatureMeasurement(IMessageBasedSession session)
+        private string SetVoltageMeasurement(IMessageBasedSession session)
         {
-            session.FormattedIO.WriteLine(":SENS:FUNC \"TEMP\"\n");
+            session.FormattedIO.WriteLine(":SENS:FUNC \"CURR:DC\"\n");
             return ReadAnswer(session);
         }
         private string CurrentMeasurement(IMessageBasedSession session)
