@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DM6500Remote
 {
@@ -57,11 +59,10 @@ namespace DM6500Remote
 
         private void Exit_Click(object sender, EventArgs e)
         {
-            try
+            if(_excelFile != null)
             {
                 _excelFile.SaveFile();
             }
-            catch { }
             Application.Exit();
         }
 
@@ -71,8 +72,8 @@ namespace DM6500Remote
         }
         private void FillTheData(string[] data)
         {
-            Current.Text = data[0];
-            Temperature.Text = data[1];            
+            Current.Text = data[1];
+            Temperature.Text = data[2];            
             Progress.Value++;
         }
         #endregion
@@ -109,7 +110,7 @@ namespace DM6500Remote
                 _excelFile = new ExcelWritter(_folderPath, FileName.Text, "Current", "Temperature");
             else
                 _excelFile.CreateNewList();
-            //_workMachinge = new VirtualMachine(delay, amount);
+           // _workMachinge = new VirtualMachine(delay, amount);
             _workMachinge = new WorkMachine(delay, amount);
             _workMachinge.WriteMessage += ReadMessage;   // Subscription
             _workMachinge.Finish += StopMeasurement;   // Subscription
