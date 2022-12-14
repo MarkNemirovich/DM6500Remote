@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.Language = new System.Windows.Forms.Button();
             this.Start = new System.Windows.Forms.Button();
             this.Stop = new System.Windows.Forms.Button();
             this.Exit = new System.Windows.Forms.Button();
@@ -53,18 +52,6 @@
             this.CurrentPanel.SuspendLayout();
             this.TemperaturePanel.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // Language
-            // 
-            this.Language.BackColor = System.Drawing.Color.Gold;
-            this.Language.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.Language.Location = new System.Drawing.Point(100, 450);
-            this.Language.Name = "Language";
-            this.Language.Size = new System.Drawing.Size(100, 50);
-            this.Language.TabIndex = 0;
-            this.Language.Text = "ENG";
-            this.Language.UseVisualStyleBackColor = false;
-            this.Language.Click += new System.EventHandler(this.Language_Click);
             // 
             // Start
             // 
@@ -268,7 +255,6 @@
             this.Controls.Add(this.Exit);
             this.Controls.Add(this.Stop);
             this.Controls.Add(this.Start);
-            this.Controls.Add(this.Language);
             this.Name = "Background";
             this.Text = "Form1";
             this.IntervalPanel.ResumeLayout(false);
@@ -285,8 +271,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.Button Language;
         private System.Windows.Forms.Button Start;
         private System.Windows.Forms.Button Stop;
         private System.Windows.Forms.Button Exit;

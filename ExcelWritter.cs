@@ -26,22 +26,19 @@ namespace DM6500Remote
             _directory = directory;
             _fileName = fileName;
             _exelFile = new ExcelFile();
-            
+
             var list = Directory.GetFiles(_directory);
+            Array.Sort(list);
             foreach (string file in list)
             {
-                if (file.Contains($"{_fileName}_{_date}") == true)
+                if (file.Contains($"{_fileName}_{_date}_№{_numberOfMeasurement}") == true)
                 {
                     int start = file.IndexOf('№')+1;
                     int end = file.IndexOf(".xlsx");
                     string number = file.Substring(start, end - start);
-                    Int32.TryParse(number, out int num);
-                    if (num > _numberOfMeasurement)
-                        _numberOfMeasurement = num;
+                    _numberOfMeasurement++;
                 }
             }
-            if (_numberOfMeasurement > 0)
-                _numberOfMeasurement++;
             _title = new string[] { zerothColumnName, firstColumnName, secondColumnName };
             CreateNewList();
         }

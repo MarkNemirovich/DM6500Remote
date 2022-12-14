@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Reflection;
 using System.Threading;
 using Ivi.Visa;
 using NationalInstruments.Restricted;
 using NationalInstruments.Visa;
-using static System.Collections.Specialized.BitVector32;
 
 namespace DM6500Remote
 {
     internal class WorkMachine
     {
-        private const int SECOND = 1000;
-        private readonly double _delay;
-        private readonly int _amount;
+        protected const int SECOND = 1000;
+        protected readonly double _delay;
+        protected readonly int _amount;
         private string deviceID;            // = "USB0::0x05E6::0x6500::04531633::INSTR";
         private Ivi.Visa.IMessageBasedSession session;
 
@@ -42,6 +40,10 @@ namespace DM6500Remote
 
         public void StartExchange()
         {
+            if (session== null) 
+            {
+                return;
+            }
             string[] data = new string[3];
             double time = 0;
             for (int i = 0; i < _amount; i++)
@@ -59,6 +61,10 @@ namespace DM6500Remote
         }
         public void StopExchange()
         {
+            if (session == null)
+            {
+                return;
+            }
             Finish?.Invoke();
             session.Dispose();
         }
