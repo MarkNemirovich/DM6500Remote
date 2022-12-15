@@ -16,7 +16,7 @@ namespace DM6500Remote
         private const int SECOND = 1000;
         private string _folderPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         private string _errorMessage = "Wrong input parameters";
-        private WorkMachine _workMachinge;
+        private VirtualMachine _workMachinge;
         private ExcelWritter _excelFile;
 
         public Background()
